@@ -30,5 +30,10 @@ desktop.ini
 # Logs
 *.log
 
+# Environment config (contains secrets)
+webapp/.env
+
 # Scratch / drafts
 questionnaire_text.txt
+
+

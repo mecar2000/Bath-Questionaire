@@ -5,6 +5,8 @@ Uses pyodbc to connect to a local SQL Server instance.
 
 import pyodbc
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Connection

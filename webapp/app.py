@@ -13,7 +13,11 @@ Flow:
 
 import io
 import csv
+import os
 from datetime import date, datetime
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -23,10 +27,10 @@ from flask import (
 import db
 
 app = Flask(__name__)
-app.secret_key = "h2gv-ux-secret-2026"  # change in production
+app.secret_key = os.environ.get("SECRET_KEY", "h2gv-ux-secret-2026")
 
 # Password required to reach the operator panel
-OPERATOR_PASSWORD = "H2TheMoon"
+OPERATOR_PASSWORD = os.environ.get("OPERATOR_PASSWORD", "H2TheMoon")
 
 # Initialise database on startup
 db.init_db()
