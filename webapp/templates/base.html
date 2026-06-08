@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}H2GV UX Questionnaire{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="{{ url_for('index') }}">
+      <img class="brand__logo" src="{{ url_for('static', filename='hylab-logo.png') }}" alt="HyLab" />
+      <span class="brand__divider"></span>
+      <span class="brand__sub">
+        <span class="k">H2 Green Valley</span>
+        <span class="v">User Experience Study</span>
+      </span>
+    </a>
+    <span class="header-tag">Safety Laboratory &middot; Demonstrator</span>
+  </div>
+</header>
+
+{% if progress is defined and progress %}
+<div class="progress-wrap" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+  <div class="progress-bar" style="width: {{ progress }}%"></div>
+</div>
+{% endif %}
+
+<main class="container">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash-msg {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div class="footer-sponsor">
+      <img src="{{ url_for('static', filename='h2greenvalley.webp') }}" alt="H2 Green Valley" />
+    </div>
+    <div class="footer-copy">
+      &copy; HyLab Safety Laboratory &mdash; H2 Green Valley Demonstrator.
+      For research use only. Responses are anonymised prior to analysis.
+    </div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='layout.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

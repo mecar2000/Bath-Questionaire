@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Welcome – H2GV UX Questionnaire{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align:center;">
+  <div class="purpose-header">
+    <img class="badge-mark" src="{{ url_for('static', filename='hylab-circle.png') }}" alt="HyLab" />
+    <div class="study-name">HyLab Safety Laboratory</div>
+    <h1>H2 Green Valley &mdash; User Experience Study</h1>
+  </div>
+
+  <p style="color:var(--muted); margin:6px auto 30px; max-width:46ch;">
+    Welcome. Please select how you would like to continue with the questionnaire.
+  </p>
+
+  <div class="role-grid">
+    <a href="{{ url_for('purpose') }}" class="role-card">
+      <span class="role-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 19a4 4 0 0 0-8 0"/><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a8.5 8.5 0 0 1 13 0"/></svg>
+      </span>
+      <span class="role-title">Participant</span>
+      <span class="role-sub">Fill in the questionnaire about your test session</span>
+      <span class="go">Continue
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a href="{{ url_for('operator_login') }}" class="role-card">
+      <span class="role-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 9.5C8 19.3 5 15.5 5 11V6l7-3z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>
+      </span>
+      <span class="role-title">Operator</span>
+      <span class="role-sub">Research team panel &mdash; password required</span>
+      <span class="go">Log in
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+  </div>
+</div>
+{% endblock %}

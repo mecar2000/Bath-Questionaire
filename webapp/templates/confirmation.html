@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set progress = 100 %}
+{% block title %}Submitted – H2GV UX Questionnaire{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:560px; margin:0 auto; text-align:center;">
+
+  <div class="confirm-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+
+  <div class="section-title" style="justify-content:center;">
+    Thank you, {{ full_name }}!
+  </div>
+
+  <p style="color:var(--muted); margin:10px 0 4px;">
+    Your questionnaire has been successfully submitted.
+  </p>
+
+  <dl class="confirm-ids">
+    <div class="id-chip">
+      <dt>Participant ID</dt>
+      <dd>{{ participant_id }}</dd>
+    </div>
+    <div class="id-chip">
+      <dt>Test ID</dt>
+      <dd>{{ test_id }}</dd>
+    </div>
+  </dl>
+
+  <p style="font-size:.9rem; color:var(--muted); margin:0 auto 28px; max-width:46ch;">
+    Please note your Test ID for reference. The research team will log the remaining session
+    details (end time, temperature setting) separately.
+  </p>
+
+  <div class="btn-row" style="justify-content:center;">
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Start a New Session</a>
+    <a href="{{ url_for('operator') }}" class="btn btn-secondary">Operator Panel</a>
+  </div>
+</div>
+{% endblock %}

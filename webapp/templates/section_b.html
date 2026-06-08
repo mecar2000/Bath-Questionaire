@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% set progress = 70 %}
+{% block title %}Sections B, C &amp; D – H2GV UX Questionnaire{% endblock %}
+
+{% block content %}
+
+{% if returning %}
+<div class="returning-badge">
+  <span class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </span>
+  <span>Welcome back &mdash; Section&nbsp;A was skipped as you are a returning participant.</span>
+</div>
+{% endif %}
+
+<form method="POST" action="{{ url_for('section_b') }}" id="main-form">
+
+  <!-- ===== SECTION B ===== -->
+  <div class="card">
+    <div class="section-title">
+      <span class="step-dot">B</span>
+      Water Heater Performance Assessment
+    </div>
+    <div class="section-desc">
+      Please rate your experience using the hydrogen-powered water heater during the test.
+      Questions marked <span class="required">*</span> are mandatory.
+    </div>
+
+    <span class="legend-toggle">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      Show rating scale legend
+    </span>
+    <div class="legend-box">
+      <table class="scale-table">
+        <thead><tr><th>Score</th><th>B2–B6 rating</th><th>Score</th><th>B7–B8 rating</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Very Poor</td><td>1</td><td>Much worse</td></tr>
+          <tr><td>2</td><td>Poor</td><td>2</td><td>Worse</td></tr>
+          <tr><td>3</td><td>Acceptable</td><td>3</td><td>Similar</td></tr>
+          <tr><td>4</td><td>Good</td><td>4</td><td>Better</td></tr>
+          <tr><td>5</td><td>Excellent</td><td>5</td><td>Much better</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- B1 Temperature setting -->
+    <div class="form-group">
+      <label class="field-label" for="b1_temp_setting">
+        <span class="q-code">B1</span> What temperature setting was selected on the water heater during your shower?
+      </label>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="number" id="b1_temp_setting" name="b1_temp_setting"
+               min="0" max="100" step="0.5" placeholder="e.g. 45" style="max-width:120px;"
+               value="{{ form.get('b1_temp_setting','') }}" />
+        <span style="font-weight:700; color:var(--muted);">&deg;C</span>
+      </div>
+    </div>
+
+    <!-- B2 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B2</span> How fast was it to get hot water at the tap? <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b2_hot_water_speed')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b2_hot_water_speed" value="{{ form.get('b2_hot_water_speed','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Very Poor</span><span class="hi">Excellent</span></div>
+      </div>
+    </div>
+
+    <!-- B3 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B3</span> How easy was it to control the water temperature? <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b3_temp_control')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b3_temp_control" value="{{ form.get('b3_temp_control','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Very Poor</span><span class="hi">Excellent</span></div>
+      </div>
+    </div>
+
+    <!-- B4 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B4</span> How satisfactory was the water temperature stability during the shower? <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b4_temp_stability')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b4_temp_stability" value="{{ form.get('b4_temp_stability','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Very Poor</span><span class="hi">Excellent</span></div>
+      </div>
+    </div>
+
+    <!-- B5 (with N/A) -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B5</span> If you turned the water off while soaping, how stable was the temperature when you resumed?
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap" id="b5-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b5_temp_after_pause')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b5_temp_after_pause" value="{{ form.get('b5_temp_after_pause','') }}" id="b5-hidden" />
+          <label class="option-item na-wrap">
+            <input type="checkbox" name="b5_not_applicable" value="1" id="b5-na"
+                   {% if form.get('b5_not_applicable') == '1' %}checked{% endif %} />
+            Not applicable
+          </label>
+        </div>
+        <div class="scale-anchors"><span class="lo">Very Poor</span><span class="hi">Excellent</span></div>
+      </div>
+    </div>
+
+    <!-- B6 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B6</span> How satisfied are you with the overall experience? <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b6_overall_satisfaction')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b6_overall_satisfaction" value="{{ form.get('b6_overall_satisfaction','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Very Poor</span><span class="hi">Excellent</span></div>
+      </div>
+    </div>
+
+    <!-- B7 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B7</span> Compared with your current domestic water heating system, how would you rate this experience? <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b7_comparison')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b7_comparison" value="{{ form.get('b7_comparison','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Much worse</span><span class="hi">Much better</span></div>
+      </div>
+    </div>
+
+    <!-- B8 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">B8</span> Would you be satisfied using this system on a daily basis in your home? <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('b8_daily_use')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="b8_daily_use" value="{{ form.get('b8_daily_use','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Strongly Disagree</span><span class="hi">Strongly Agree</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION C ===== -->
+  <div class="card">
+    <div class="section-title">
+      <span class="step-dot">C</span>
+      Safety, Confidence &amp; Future Adoption
+    </div>
+    <div class="section-desc">
+      Please rate the following statements. Questions marked <span class="required">*</span> are mandatory.
+    </div>
+
+    <span class="legend-toggle">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      Show rating scale legend
+    </span>
+    <div class="legend-box">
+      <table class="scale-table">
+        <thead><tr><th>Score</th><th>Rating</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Strongly Disagree</td></tr>
+          <tr><td>2</td><td>Disagree</td></tr>
+          <tr><td>3</td><td>Neutral</td></tr>
+          <tr><td>4</td><td>Agree</td></tr>
+          <tr><td>5</td><td>Strongly Agree</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- C1 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">C1</span> I felt comfortable using the hydrogen-powered water heater during the test. <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('c1_comfort')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="c1_comfort" value="{{ form.get('c1_comfort','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Strongly Disagree</span><span class="hi">Strongly Agree</span></div>
+      </div>
+    </div>
+
+    <!-- C2 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">C2</span> The operation of the hydrogen-powered water heater met my expectations. <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('c2_met_expectations')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="c2_met_expectations" value="{{ form.get('c2_met_expectations','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Strongly Disagree</span><span class="hi">Strongly Agree</span></div>
+      </div>
+    </div>
+
+    <!-- C3 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">C3</span> The system appeared reliable during operation. <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('c3_reliability')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="c3_reliability" value="{{ form.get('c3_reliability','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Strongly Disagree</span><span class="hi">Strongly Agree</span></div>
+      </div>
+    </div>
+
+    <!-- C4 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">C4</span> Based on this experience, I would feel confident using a hydrogen-powered water heater on a regular basis. <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('c4_confidence')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="c4_confidence" value="{{ form.get('c4_confidence','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Strongly Disagree</span><span class="hi">Strongly Agree</span></div>
+      </div>
+    </div>
+
+    <!-- C5 -->
+    <div class="form-group">
+      <label class="field-label">
+        <span class="q-code">C5</span> Based on this experience, I would consider installing a hydrogen-powered water heater in my home if it were commercially available under similar conditions. <span class="required">*</span>
+      </label>
+      <div class="scale-block">
+        <div class="scale-wrap">
+          {% for v in [1,2,3,4,5] %}
+          <button type="button" class="scale-btn {% if form.get('c5_would_install')|string == v|string %}active{% endif %}" data-value="{{ v }}">{{ v }}</button>
+          {% endfor %}
+          <input type="hidden" name="c5_would_install" value="{{ form.get('c5_would_install','') }}" />
+        </div>
+        <div class="scale-anchors"><span class="lo">Strongly Disagree</span><span class="hi">Strongly Agree</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION D ===== -->
+  <div class="card">
+    <div class="section-title">
+      <span class="step-dot">D</span>
+      Additional Comments
+    </div>
+    <div class="section-desc">
+      This section is <strong>optional</strong>. Please complete it if you wish to provide
+      additional feedback regarding your experience.
+    </div>
+
+    <div class="form-group">
+      <label class="field-label" for="d1_liked_most">
+        <span class="q-code">D1</span> What aspects of the system did you like most?
+      </label>
+      <textarea id="d1_liked_most" name="d1_liked_most"
+                placeholder="Optional &mdash; your answer here">{{ form.get('d1_liked_most','') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="field-label" for="d2_improvements">
+        <span class="q-code">D2</span> What aspects of the system could be improved?
+      </label>
+      <textarea id="d2_improvements" name="d2_improvements"
+                placeholder="Optional &mdash; your answer here">{{ form.get('d2_improvements','') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="field-label" for="d3_comments">
+        <span class="q-code">D3</span> Any additional comments?
+      </label>
+      <textarea id="d3_comments" name="d3_comments"
+                placeholder="Optional &mdash; your answer here">{{ form.get('d3_comments','') }}</textarea>
+    </div>
+
+    <div class="btn-row">
+      {% if not returning %}
+      <a href="{{ url_for('section_a') }}" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+        Back
+      </a>
+      {% else %}
+      <a href="{{ url_for('start') }}" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+        Back
+      </a>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">
+        Submit Questionnaire
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // B5: disable scale buttons when N/A is checked
+  const b5na     = document.getElementById('b5-na');
+  const b5hidden = document.getElementById('b5-hidden');
+  if (b5na) {
+    b5na.addEventListener('change', function() {
+      const btns = document.querySelectorAll('#b5-wrap .scale-btn');
+      if (this.checked) {
+        btns.forEach(b => { b.classList.remove('active'); b.disabled = true; b.style.opacity = '0.35'; });
+        b5hidden.value = '';
+      } else {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
+      }
+    });
+    if (b5na.checked) {
+      document.querySelectorAll('#b5-wrap .scale-btn').forEach(b => {
+        b.disabled = true; b.style.opacity = '0.35';
+      });
+    }
+  }
+
+  // Client-side validation of required scale fields before submit
+  document.getElementById('main-form').addEventListener('submit', function(e) {
+    const required = [
+      'b2_hot_water_speed','b3_temp_control','b4_temp_stability',
+      'b6_overall_satisfaction','b7_comparison','b8_daily_use',
+      'c1_comfort','c2_met_expectations','c3_reliability',
+      'c4_confidence','c5_would_install'
+    ];
+    const missing = required.filter(name => {
+      const inp = document.querySelector(`input[name="${name}"]`);
+      return inp && !inp.value;
+    });
+    if (missing.length) {
+      e.preventDefault();
+      alert('Please answer all required questions (marked *) before submitting.\n\nMissing: ' + missing.join(', '));
+    }
+  });
+</script>
+{% endblock %}

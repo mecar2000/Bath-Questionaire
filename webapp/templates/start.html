@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set progress = 20 %}
+{% block title %}Session Info – H2GV UX Questionnaire{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="section-title">
+    <span class="step-dot">0</span>
+    General Information about the Test
+  </div>
+  <div class="section-desc">Please enter your name and confirm the date and time of your test session.</div>
+
+  <form method="POST" action="{{ url_for('start') }}" id="start-form">
+
+    <div class="form-group">
+      <label class="field-label" for="full_name">
+        Participant name <span class="optional-tag">(first and last)</span> <span class="required">*</span>
+      </label>
+      <input type="text" id="full_name" name="full_name" required
+             placeholder="e.g. Ana Ferreira" autocomplete="off"
+             value="{{ request.form.get('full_name', '') }}" />
+      <div class="hint" id="name-hint"></div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section-title" style="font-size:1.02rem;">
+      <span class="step-dot" style="width:28px;height:28px;font-size:.8rem;">0.0</span>
+      Date &amp; time of the test
+    </div>
+    <div class="section-desc" style="margin-bottom:20px;">
+      Used to match your answers to the correct test session.
+    </div>
+
+    <div class="row-2">
+      <div class="form-group">
+        <label class="field-label" for="test_date">Date <span class="required">*</span></label>
+        <input type="date" id="test_date" name="test_date"
+               value="{{ today }}" required />
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" for="shower_time">
+          Approximate time of your shower <span class="required">*</span>
+        </label>
+        <input type="time" id="shower_time" name="shower_time"
+               value="{{ request.form.get('shower_time', '') }}" required />
+        <div class="hint">Helps us link your answers to the right session.</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="{{ url_for('purpose') }}" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+        Back
+      </a>
+      <button type="submit" class="btn btn-primary">
+        Continue
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const nameInput = document.getElementById('full_name');
+  const nameHint  = document.getElementById('name-hint');
+  let checkTimer;
+
+  nameInput.addEventListener('input', function () {
+    clearTimeout(checkTimer);
+    const val = this.value.trim();
+    if (val.length < 3) { nameHint.innerHTML = ''; return; }
+
+    checkTimer = setTimeout(async () => {
+      try {
+        const res  = await fetch(`/api/check-participant?name=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        if (data.exists && !data.is_stub) {
+          nameHint.innerHTML =
+            `<span style="color:var(--success)">&#10003; Returning participant (${data.participant_id}) &mdash; Section&nbsp;A will be skipped.</span>`;
+        } else if (data.exists && data.is_stub) {
+          nameHint.innerHTML =
+            `<span style="color:var(--green-700)">&#8505; Pre-registered (${data.participant_id}) &mdash; please complete your personal information in Section&nbsp;A.</span>`;
+        } else {
+          nameHint.innerHTML =
+            `<span style="color:var(--muted)">New participant &mdash; Section&nbsp;A will be completed.</span>`;
+        }
+      } catch { nameHint.innerHTML = ''; }
+    }, 400);
+  });
+</script>
+{% endblock %}
