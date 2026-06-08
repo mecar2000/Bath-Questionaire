@@ -1,0 +1,34 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Flask session / instance data
+instance/
+flask_session/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Exported data (contains participant responses)
+*.csv
+*.xlsx
+
+# Logs
+*.log
+
+# Scratch / drafts
+questionnaire_text.txt
