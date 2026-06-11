@@ -5,6 +5,7 @@ Uses pyodbc to connect to a local SQL Server instance.
 
 import pyodbc
 import os
+from difflib import SequenceMatcher
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -142,6 +143,38 @@ def get_participant_by_name(full_name: str):
     cols = [d[0] for d in cursor.description] if row else []
     conn.close()
     return dict(zip(cols, row)) if row else None
+
+
+def search_participants(query: str, limit: int = 8) -> list[dict]:
+    """
+    Return up to `limit` participants ranked by fuzzy similarity to `query`.
+    Matches against full name, first token, and last token so a single first
+    or last name still surfaces the right person.
+    """
+    q = query.strip().lower()
+    if not q:
+        return []
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT participant_id, full_name, is_stub FROM participants")
+    rows = cursor.fetchall()
+    conn.close()
+
+    def score(full_name: str) -> float:
+        name_lower = full_name.lower()
+        parts = name_lower.split()
+        # Score against full name, first token, and last token; take the best
+        candidates = [name_lower] + parts
+        return max(SequenceMatcher(None, q, c).ratio() for c in candidates)
+
+    scored = sorted(
+        [{"participant_id": r[0], "full_name": r[1], "is_stub": bool(r[2]), "score": score(r[1])} for r in rows],
+        key=lambda x: x["score"],
+        reverse=True,
+    )
+    # Drop very poor matches (score < 0.3) and return top results
+    return [r for r in scored if r["score"] >= 0.3][:limit]
 
 
 def get_participant_by_id(participant_id: str):

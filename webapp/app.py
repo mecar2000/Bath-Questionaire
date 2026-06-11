@@ -431,6 +431,18 @@ def api_check_participant():
     return jsonify({"exists": False, "participant_id": None, "is_stub": False})
 
 
+@app.route("/api/search-participants")
+def api_search_participants():
+    """Return ranked fuzzy-match results for a name query (operator panel)."""
+    if not session.get("operator_authed"):
+        return jsonify({"ok": False, "error": "Not authenticated"}), 403
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"matches": []})
+    matches = db.search_participants(query)
+    return jsonify({"matches": matches})
+
+
 @app.route("/api/participant-tests")
 def api_participant_tests():
     """Return JSON list of test rows for a participant ID (operator panel)."""

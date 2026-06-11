@@ -125,66 +125,107 @@
   });
 
   async function searchParticipant() {
-    const name         = document.getElementById('search_name').value.trim();
-    const resultDiv    = document.getElementById('search-result');
+    const query      = document.getElementById('search_name').value.trim();
+    const resultDiv  = document.getElementById('search-result');
+    const testsArea  = document.getElementById('tests-area');
+
+    if (!query) { alert('Please enter a name.'); return; }
+
+    resultDiv.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">Searching…</p>';
+    resultDiv.style.display = 'block';
+    testsArea.style.display = 'none';
+
+    try {
+      const res  = await fetch(`/api/search-participants?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      if (!data.ok && data.error) {
+        resultDiv.innerHTML = `<div class="flash-msg error">${data.error}</div>`;
+        return;
+      }
+
+      const matches = data.matches || [];
+
+      if (matches.length === 0) {
+        const safeName = query.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const safeNameJs = query.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        resultDiv.innerHTML =
+          `<div class="flash-msg error" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+             <span>No participant found matching <strong>&ldquo;${safeName}&rdquo;</strong>.</span>
+             <button type="button" class="btn btn-primary"
+                     style="padding:7px 18px; font-size:.88rem; white-space:nowrap;"
+                     onclick="registerParticipant('${safeNameJs}')">
+               + Register as new participant
+             </button>
+           </div>`;
+        return;
+      }
+
+      // Render match list
+      const rows = matches.map(m => {
+        const status = m.is_stub
+          ? '<span style="color:var(--accent);font-size:.8rem;">stub</span>'
+          : '<span style="color:var(--green-700);font-size:.8rem;">complete</span>';
+        const pct = Math.round(m.score * 100);
+        return `
+          <div class="test-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 16px;">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <strong style="font-variant-numeric:tabular-nums;">${m.participant_id}</strong>
+              <span>${m.full_name}</span>
+              ${status}
+              <span style="color:var(--muted);font-size:.78rem;">${pct}% match</span>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px; font-size:.8rem;"
+                      onclick="selectParticipant('${m.participant_id}', '${m.full_name.replace(/'/g,"\\'")}')">
+                Select &amp; view tests
+              </button>
+              <button type="button" class="btn btn-primary" style="padding:5px 12px; font-size:.8rem;"
+                      onclick="useParticipantId('${m.participant_id}')">
+                Use ID &#8595;
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+
+      resultDiv.innerHTML =
+        `<p style="font-size:.85rem; font-weight:700; color:var(--muted); margin:0 0 10px;">
+           ${matches.length} closest match${matches.length !== 1 ? 'es' : ''} for &ldquo;${query.replace(/&/g,'&amp;').replace(/</g,'&lt;')}&rdquo;
+         </p>
+         <div style="display:flex; flex-direction:column; gap:8px;">${rows}</div>`;
+
+    } catch (err) {
+      resultDiv.innerHTML = `<div class="flash-msg error">Network error: ${err}</div>`;
+    }
+  }
+
+  function useParticipantId(pid) {
+    document.getElementById('manual_pid').value = pid;
+    document.getElementById('manual_pid').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function selectParticipant(pid, fullName) {
+    useParticipantId(pid);
     const testsArea    = document.getElementById('tests-area');
     const testsList    = document.getElementById('tests-list');
     const testsHeading = document.getElementById('tests-heading');
 
-    if (!name) { alert('Please enter a name.'); return; }
-
-    resultDiv.style.display = 'none';
-    testsArea.style.display  = 'none';
-
     try {
-      const res  = await fetch(`/api/check-participant?name=${encodeURIComponent(name)}`);
-      const data = await res.json();
+      const testsRes  = await fetch(`/api/participant-tests?id=${encodeURIComponent(pid)}`);
+      const testsData = await testsRes.json();
 
-      if (data.exists) {
-        const status = data.is_stub
-          ? 'Pre-registered (stub &mdash; will complete Section A)'
-          : 'Returning participant (Section A complete)';
-        resultDiv.innerHTML =
-          `<div class="returning-badge" style="align-items:flex-start;">
-             <span class="icon">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-             </span>
-             <span>
-               <strong>${data.participant_id}</strong> &mdash; ${name} &mdash; ${status}.
-               <button type="button" class="btn btn-secondary"
-                       style="padding:5px 12px; font-size:.8rem; margin-left:8px;"
-                       onclick="document.getElementById('manual_pid').value='${data.participant_id}'; document.getElementById('manual_pid').scrollIntoView({behavior:'smooth'});">
-                 Use this ID &#8595;
-               </button>
-             </span>
-           </div>`;
-        resultDiv.style.display = 'block';
-
-        // Load tests for this participant
-        const testsRes  = await fetch(`/api/participant-tests?id=${encodeURIComponent(data.participant_id)}`);
-        const testsData = await testsRes.json();
-
-        if (testsData.tests && testsData.tests.length > 0) {
-          testsHeading.textContent = `Test sessions for ${name}`;
-          testsList.innerHTML = testsData.tests.map(t => buildTestRow(t)).join('');
-          testsArea.style.display = 'block';
-          testsArea.querySelectorAll('.update-test-btn').forEach(btn => {
-            btn.addEventListener('click', () => submitTestUpdate(btn.dataset.testId));
-          });
-        }
-
+      if (testsData.tests && testsData.tests.length > 0) {
+        testsHeading.textContent = `Test sessions for ${fullName} (${pid})`;
+        testsList.innerHTML = testsData.tests.map(t => buildTestRow(t)).join('');
+        testsArea.style.display = 'block';
+        testsArea.querySelectorAll('.update-test-btn').forEach(btn => {
+          btn.addEventListener('click', () => submitTestUpdate(btn.dataset.testId));
+        });
+        testsArea.scrollIntoView({ behavior: 'smooth' });
       } else {
-        const safeName = name.replace(/'/g, "\\'");
-        resultDiv.innerHTML =
-          `<div class="flash-msg error" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-             <span>No participant found with name <strong>&ldquo;${name}&rdquo;</strong>.</span>
-             <button type="button" class="btn btn-primary"
-                     style="padding:7px 18px; font-size:.88rem; white-space:nowrap;"
-                     onclick="registerParticipant('${safeName}')">
-               + Register as new participant
-             </button>
-           </div>`;
-        resultDiv.style.display = 'block';
+        testsHeading.textContent = `No test sessions yet for ${fullName} (${pid})`;
+        testsList.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">No sessions recorded.</p>';
+        testsArea.style.display = 'block';
       }
     } catch (err) {
       alert('Network error: ' + err);
