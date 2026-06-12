@@ -343,23 +343,92 @@ def test_exists(test_id: str) -> bool:
 
 def create_test(data: dict) -> str:
     """
-    Insert a brand-new test row with the next per-day sequence number.
-    Used by the operator panel (Log Test Session) to create a session that a
-    participant submission will later attach to via match_or_create_test.
-    Returns the new test_id.
+    Log an operator session, attaching to a participant's already-submitted
+    session for the same date when one is waiting, or inserting a new row.
+
+    This is the operator-side mirror of match_or_create_test: the two paths
+    must converge on ONE row per real session no matter who records it first.
+
+      * Operator logs first  -> a fresh row is inserted; the participant's later
+        submission attaches to it via match_or_create_test.
+      * Participant submits first -> their row already exists but carries no
+        operator metadata (temp_setting / end_time / operator_name all NULL).
+        We find the closest such row by start_time and UPDATE it instead of
+        creating a duplicate.
+
+    Returns the test_id the operator data was written to.
     """
+    participant_id = data["participant_id"]
+    test_date      = data["test_date"]
+    op_minutes     = _time_to_minutes(data.get("start_time"))
+
     conn = get_connection()
     cursor = conn.cursor()
-    seq = _next_test_seq(cursor, data["participant_id"], data["test_date"])
-    test_id = generate_test_id(data["participant_id"], data["test_date"], seq)
+
+    # Candidate sessions: same participant + date that have NOT yet had operator
+    # metadata recorded (no temp_setting, end_time or operator_name). These are
+    # rows a participant created on submission and that are still awaiting the
+    # operator's session log.
+    cursor.execute(
+        """SELECT test_id, start_time
+           FROM tests
+           WHERE participant_id = ?
+             AND test_date = ?
+             AND temp_setting  IS NULL
+             AND end_time      IS NULL
+             AND operator_name IS NULL""",
+        (participant_id, test_date)
+    )
+    candidates = cursor.fetchall()
+
+    best_id = None
+    if candidates:
+        if op_minutes is None:
+            best_id = candidates[0][0]
+        else:
+            # Pick the unmatched participant session whose start_time is nearest
+            # the operator's; rows with no start_time sort last.
+            def distance(row):
+                cand_minutes = _time_to_minutes(row[1])
+                if cand_minutes is None:
+                    return (1, 0)
+                return (0, abs(cand_minutes - op_minutes))
+            best_id = min(candidates, key=distance)[0]
+
+    if best_id is not None:
+        # Fill operator metadata onto the existing participant row. COALESCE
+        # preserves the participant's stated start_time unless the operator
+        # supplied one of their own.
+        cursor.execute(
+            """UPDATE tests SET
+               start_time    = COALESCE(?, start_time),
+               end_time      = COALESCE(?, end_time),
+               temp_setting  = COALESCE(?, temp_setting),
+               operator_name = COALESCE(?, operator_name),
+               comments      = COALESCE(?, comments)
+               WHERE test_id = ?""",
+            (data.get("start_time"),
+             data.get("end_time"),
+             data.get("temp_setting"),
+             data.get("operator_name"),
+             data.get("comments"),
+             best_id)
+        )
+        conn.close()
+        return best_id
+
+    # No waiting participant session — insert a fresh operator row that a later
+    # participant submission will attach to.
+    seq = _next_test_seq(cursor, participant_id, test_date)
+    test_id = generate_test_id(participant_id, test_date, seq)
     cursor.execute(
         """INSERT INTO tests
            (test_id, participant_id, test_date, start_time, end_time,
             temp_setting, operator_name, comments)
            VALUES (?,?,?,?,?,?,?,?)""",
         (test_id,
-         data["participant_id"],
-         data["test_date"],
+         participant_id,
+         test_date,
          data.get("start_time"),
          data.get("end_time"),
          data.get("temp_setting"),
